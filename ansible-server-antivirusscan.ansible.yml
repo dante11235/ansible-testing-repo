@@ -1,0 +1,21 @@
+---
+- name: Add ClamAV run script
+  hosts: uniqa-single
+  become: true
+
+  tasks:
+    - name: Copy file with owner and permissions
+      ansible.builtin.copy:
+        src: ./virus-scan.sh
+        dest: /opt/virus-scan.sh
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: ClamAV Virus Scan CronJOB
+      ansible.builtin.cron:
+        name: "ClamAV Virus Scan CronJOB"
+        minute: "0"
+        hour: "1"
+        user: root
+        job: "/opt/virus-scan.sh"

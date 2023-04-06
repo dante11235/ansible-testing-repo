@@ -1,0 +1,27 @@
+- hosts: uniqa-single
+  become: true
+
+  roles:
+    - role: dante11235.ansible_role_fluentd_gelf
+      graylog_server: 10.66.108.88
+      graylog_gelf_port: 12201
+      fluentd_conf_sources: |
+        <source>
+          @type syslog
+          tag graylog2
+        </source>
+      fluentd_conf_matches: |
+        <match graylog2.**>
+          @type gelf
+          host {{ graylog_server }}
+          port {{ graylog_gelf_port }}
+          <buffer>
+            flush_interval 5s
+          </buffer>
+        </match>
+
+  tasks:
+    - name: Remove vector
+      apt:
+        pkg: vector
+        state: absent

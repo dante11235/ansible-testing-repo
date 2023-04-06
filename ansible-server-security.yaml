@@ -1,0 +1,37 @@
+- hosts: uniqa-single
+  become: true
+
+  roles:
+    - role: geerlingguy.clamav
+      clamav_daemon_state: started
+      clamav_daemon_enabled: true
+      clamav_freshclam_daemon_state: started
+      clamav_freshclam_daemon_enabled: true
+    - softasap.sa-secure-audit-rkhunter
+    - role: maxlareo.chkrootkit
+      chkrootkit_run_daily: true
+    - role: gantsign.pwquality
+      pwquality_minlen: 16
+      pwquality_maxrepeat: 3
+      pwquality_maxclassrepeat: 0
+      pwquality_minclass: 4
+      pwquality_gecoscheck: 3
+
+  tasks:
+    - command: apt-get clean
+      become: yes
+
+    - name: RKhunter CronJOB
+      ansible.builtin.cron:
+        name: "RKhunter CronJOB"
+        minute: "0"
+        hour: "1"
+        user: root
+        job: "/usr/bin/rkhunter -c --cronjob 2>&1 | mail -s \"RKhunter Scan Results\" root@localhost"
+    - name: RKhunter Update JOB
+      ansible.builtin.cron:
+        name: "RKhunter Update JOB"
+        minute: "0"
+        hour: "0"
+        user: root
+        job: "/usr/bin/rkhunter --update"
