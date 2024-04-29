@@ -1,0 +1,11 @@
+- name: "Set correct hostname with domain"
+  hosts: uniqa-petoall
+  tasks:
+    - name: Show current hostname
+      ansible.builtin.debug:
+        var: ansible_facts.nodename
+
+    - name: Set a hostname
+      ansible.builtin.hostname:
+        name: "{{ ansible_facts.nodename }}.insdata.local"
+      when: ansible_facts.nodename.find("insdata.local") == -1

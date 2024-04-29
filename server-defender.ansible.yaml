@@ -1,0 +1,76 @@
+- name: Install windows defender agent
+  hosts: uniqa-petoall
+  vars:
+    defender_exclusion_folders:
+      10.66.98.88:
+        - /var/log
+      10.66.104.228:
+        - /opt/cbn_documents
+      10.66.104.230:
+        - /opt/cbn_documents
+      10.66.104.193:
+        - /opt/cbn_documents
+      10.66.104.194:
+        - /opt/cbn_documents
+      10.66.104.232:
+        - /opt/cbn_documents
+      10.66.104.142:
+        - /opt/cbn_documents
+      10.66.104.147:
+        - /opt/cbn_documents
+      10.66.104.143:
+        - /opt/cbn_documents
+      10.66.104.146:
+        - /opt/cbn_documents
+      10.66.104.234:
+        - /opt/cbn_documents
+      10.66.104.99:
+        - /var/lib/kubelet/pods
+      10.66.104.155:
+        - /var/lib/kubelet/pods
+      10.66.104.236:
+        - /opt/azure_db_share
+      
+
+  tasks:
+    - name: "Basic server onboarding to Defender"
+      ansible.builtin.include_tasks: ./roles/onboarding_setup.yaml
+
+    - name: "Download repo info MDATP using apt"
+      ansible.builtin.include_tasks: ./roles/add_apt_repo.yaml
+
+    - name: Install MDATP
+      ansible.builtin.apt:
+        name: mdatp
+        state: present
+        update_cache: true
+
+    - name: Check if realtime protection is enabled.
+      ansible.builtin.command: "mdatp health"
+      register: realtime_protection_result
+      check_mode: false
+      changed_when: false
+
+    - name: Check if real-time-protection is running
+      ansible.builtin.set_fact:
+        protection_enabled: "{{ realtime_protection_result.stdout | regex_search(regexp, '\\1', multiline=True) }}"
+      vars:
+        regexp: '^\s*real_time_protection_enabled\s*:\s*(.*)$'
+
+    - name: Enable realtime protection
+      ansible.builtin.command: "mdatp config real-time-protection --value enabled"
+      when: protection_enabled[0] == "false"
+
+    - name: Check existing exclusion
+      ansible.builtin.command: "mdatp exclusion list"
+      register: mdatp_exclustion_list
+      check_mode: false
+      changed_when: false
+
+    - name: Exclude specific folders
+      ansible.builtin.command: "mdatp exclusion folder add --path {{ item }}"
+      with_items:
+        - "{{ defender_exclusion_folders[inventory_hostname] }}"
+      when:
+        - defender_exclusion_folders[inventory_hostname] is defined
+        - not mdatp_exclustion_list | regex_search('{{ item }}', multiline=True)

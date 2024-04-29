@@ -1,0 +1,34 @@
+- name: "Set correct hostname with domain"
+  hosts: uniqa-petoall
+  tasks:
+    - name: Show current hostname
+      ansible.builtin.debug:
+        var: ansible_facts.nodename
+
+    - name: Purge Clam AV - clamav
+      ansible.builtin.apt:
+        name: clamav
+        state: absent
+        purge: true
+        autoclean: false
+
+    - name: Purge Clam AV - clamav-base
+      ansible.builtin.apt:
+        name: clamav-base
+        state: absent
+        purge: true
+        autoclean: false
+
+    - name: Purge Clam AV - clamav-daemon
+      ansible.builtin.apt:
+        name: clamav-daemon
+        state: absent
+        purge: true
+        autoclean: false
+
+    - name: Purge Clam AV - clamav-freshclam
+      ansible.builtin.apt:
+        name: clamav-freshclam
+        state: absent
+        purge: true
+        autoclean: false
